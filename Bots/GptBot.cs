@@ -48,6 +48,7 @@ namespace chatSensei.Bots
                 var requestData = new
                 {
                     prompt = input,
+                    max_tokens = 2048,
                     temperature = 0.7
                 };
                 var json = JsonConvert.SerializeObject(requestData);
