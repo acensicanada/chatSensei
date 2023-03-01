@@ -4,6 +4,7 @@
 // Generated with EchoBot .NET Template version v4.17.1
 
 using chatSensei;
+using ChatSensei.Models;
 using Microsoft.Bot.Builder;
 using Microsoft.Bot.Schema;
 using Microsoft.Extensions.Configuration;
@@ -33,36 +34,59 @@ namespace chatSensei.Bots
             string openAIKey = config["openAIKey"];
             Console.WriteLine(openAIKey);
 
-            string finalResponse = await GetChatGPTResponseAsync(userText, openAIKey);
-            await turnContext.SendActivityAsync(MessageFactory.Text(finalResponse, finalResponse), cancellationToken);
+            IMessageActivity finalResponse = await GetChatGPTResponseAsync(userText, openAIKey);
+            await turnContext.SendActivityAsync(finalResponse, cancellationToken);
         }
 
-        private async Task<string> GetChatGPTResponseAsync(string input, string openAIKey)
+        private async Task<IMessageActivity> GetChatGPTResponseAsync(string inputMessage, string openAIKey)
         {
-            string response = null;
-            string url = "https://api.openai.com/v1/engines/text-davinci-003/completions";
+            IMessageActivity responseMessage = null;
+            var apiModel = GetApiModel(inputMessage);
+            string url = $"https://api.openai.com/v1/{apiModel.url}";
 
             using (var client = new HttpClient())
             {
                 client.DefaultRequestHeaders.Add("Authorization", $"Bearer {openAIKey}");
-                var requestData = new
-                {
-                    prompt = input,
-                    max_tokens = 2048,
-                    temperature = 0.7
-                };
-                var json = JsonConvert.SerializeObject(requestData);
-                var content = new StringContent(json, Encoding.UTF8, "application/json");
+                string body = apiModel.GetBody(inputMessage);
+                var content = new StringContent(body, Encoding.UTF8, "application/json");
                 var result = await client.PostAsync(url, content);
                 Console.WriteLine(result.StatusCode);
                 if (result.IsSuccessStatusCode)
                 {
                     var responseContent = await result.Content.ReadAsStringAsync();
                     dynamic data = JsonConvert.DeserializeObject(responseContent);
-                    response = data.choices[0].text;
+
+                    if (apiModel is ImageApiModel)
+                    {
+                        var imageUrl = data.data[0].url; // Récupération de l'URL de l'image depuis la réponse
+                        var attachment = new Attachment
+                        {
+                            Name = "image.png", // Nom de l'image
+                            ContentType = "image/png", // Type de contenu de l'image
+                            ContentUrl = imageUrl // URL de l'image
+                        };
+
+                        responseMessage = MessageFactory.Attachment(attachment);
+                    }
+                    else
+                    {
+                        var textResponse = data.choices[0].text;
+                        responseMessage = MessageFactory.Text(textResponse, textResponse);
+                    }
                 }
             }
-            return response;
+            return responseMessage;
+        }
+
+        private AbstractApiModel GetApiModel(string inputMessage)
+        {
+            AbstractApiModel apiModel = inputMessage switch
+            {
+                string s when s.StartsWith("!image") => new ImageApiModel(),
+                _ => new TextApiModel(),
+            };
+
+            return apiModel;
         }
 
         protected override async Task OnMembersAddedAsync(IList<ChannelAccount> membersAdded, ITurnContext<IConversationUpdateActivity> turnContext, CancellationToken cancellationToken)
