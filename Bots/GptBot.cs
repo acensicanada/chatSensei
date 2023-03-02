@@ -25,7 +25,6 @@ namespace chatSensei.Bots
         {
             await base.OnMessageActivityAsync(turnContext, cancellationToken);
 
-            // Get user input text
             string userText = turnContext.Activity.RemoveRecipientMention();
 
             Console.WriteLine("Meesage received :" + userText);
@@ -41,7 +40,7 @@ namespace chatSensei.Bots
         private async Task<IMessageActivity> GetChatGPTResponseAsync(string inputMessage, string openAIKey)
         {
             IMessageActivity responseMessage = null;
-            var apiModel = GetApiModel(inputMessage);
+            var apiModel = ApiModelFactory.createApiModel(inputMessage);
             string url = $"https://api.openai.com/v1/{apiModel.url}";
 
             using (var client = new HttpClient())
@@ -58,12 +57,12 @@ namespace chatSensei.Bots
 
                     if (apiModel is ImageApiModel)
                     {
-                        var imageUrl = data.data[0].url; // Récupération de l'URL de l'image depuis la réponse
+                        var imageUrl = data.data[0].url;
                         var attachment = new Attachment
                         {
-                            Name = "image.png", // Nom de l'image
-                            ContentType = "image/png", // Type de contenu de l'image
-                            ContentUrl = imageUrl // URL de l'image
+                            Name = "image.png",
+                            ContentType = "image/png",
+                            ContentUrl = imageUrl
                         };
 
                         responseMessage = MessageFactory.Attachment(attachment);
@@ -76,17 +75,6 @@ namespace chatSensei.Bots
                 }
             }
             return responseMessage;
-        }
-
-        private AbstractApiModel GetApiModel(string inputMessage)
-        {
-            AbstractApiModel apiModel = inputMessage switch
-            {
-                string s when s.StartsWith("!image") => new ImageApiModel(),
-                _ => new TextApiModel(),
-            };
-
-            return apiModel;
         }
 
         protected override async Task OnMembersAddedAsync(IList<ChannelAccount> membersAdded, ITurnContext<IConversationUpdateActivity> turnContext, CancellationToken cancellationToken)
