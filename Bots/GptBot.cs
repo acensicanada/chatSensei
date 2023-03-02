@@ -40,7 +40,7 @@ namespace chatSensei.Bots
         private async Task<IMessageActivity> GetChatGPTResponseAsync(string inputMessage, string openAIKey)
         {
             IMessageActivity responseMessage = null;
-            var apiModel = ApiModelFactory.createApiModel(inputMessage);
+            var apiModel = ApiModelFactory.CreateApiModel(inputMessage);
             string url = $"https://api.openai.com/v1/{apiModel.url}";
 
             using (var client = new HttpClient())
@@ -69,8 +69,8 @@ namespace chatSensei.Bots
                     }
                     else
                     {
-                        var textResponse = data.choices[0].text;
-                        responseMessage = MessageFactory.Text(textResponse, textResponse);
+                        string textResponse = data.choices[0].text;
+                        responseMessage = MessageFactory.Text(textResponse);
                     }
                 }
             }

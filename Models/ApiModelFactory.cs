@@ -2,7 +2,7 @@
 {
     public static class ApiModelFactory
     {
-        public static AbstractApiModel createApiModel(string inputMessage)
+        public static AbstractApiModel CreateApiModel(string inputMessage)
         {
             return inputMessage switch
             {
