@@ -4,6 +4,7 @@
 // Generated with EchoBot .NET Template version v4.17.1
 
 using chatSensei.Bots;
+using ChatSensei.Models.Client;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Bot.Builder;
@@ -12,6 +13,7 @@ using Microsoft.Bot.Connector.Authentication;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using System.Collections.Generic;
 
 namespace chatSensei
 {
@@ -38,6 +40,12 @@ namespace chatSensei
             // Create the Bot Adapter with error handling enabled.
             services.AddSingleton<IBotFrameworkHttpAdapter, AdapterWithErrorHandler>();
 
+            //var config = new ConfigurationBuilder().AddUserSecrets<Program>().Build();
+            //string openAIKey = config["openAIKey"];
+
+            services.AddSingleton<IImageAIClient, ImageAIClient>();
+            services.AddSingleton<ITextAIClient, TextAIClient>();
+
             // Create the bot as a transient. In this case the ASP Controller is expecting an IBot.
             services.AddTransient<IBot, GptBot>();
         }
@@ -59,8 +67,6 @@ namespace chatSensei
                 {
                     endpoints.MapControllers();
                 });
-
-            // app.UseHttpsRedirection();
         }
     }
 }

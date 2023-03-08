@@ -3,16 +3,14 @@
 //
 // Generated with EchoBot .NET Template version v4.17.1
 
-using chatSensei;
-using ChatSensei.Models;
+using ChatSensei.Models.ApiModel;
+using ChatSensei.Models.Chat;
+using ChatSensei.Models.Client;
+using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.Bot.Builder;
 using Microsoft.Bot.Schema;
 using Microsoft.Extensions.Configuration;
-using Newtonsoft.Json;
-using System;
 using System.Collections.Generic;
-using System.Net.Http;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -20,6 +18,15 @@ namespace chatSensei.Bots
 {
     public class GptBot : ActivityHandler
     {
+        private readonly IImageAIClient imageClient;
+        private readonly ITextAIClient textClient;
+        private static readonly ChatContext chatContext = new ChatContext();
+
+        public GptBot(IImageAIClient imageClient, ITextAIClient textClient)
+        {
+            this.imageClient = imageClient;
+            this.textClient = textClient;
+        }
 
         protected override async Task OnMessageActivityAsync(ITurnContext<IMessageActivity> turnContext, CancellationToken cancellationToken)
         {
@@ -27,53 +34,24 @@ namespace chatSensei.Bots
 
             string userText = turnContext.Activity.RemoveRecipientMention();
 
-            Console.WriteLine("Meesage received :" + userText);
-
-            var config = new ConfigurationBuilder().AddUserSecrets<Program>().Build();
-            string openAIKey = config["openAIKey"];
-            Console.WriteLine(openAIKey);
-
-            IMessageActivity finalResponse = await GetChatGPTResponseAsync(userText, openAIKey);
+            IMessageActivity finalResponse = await GetChatGPTResponseAsync(userText);
             await turnContext.SendActivityAsync(finalResponse, cancellationToken);
         }
 
-        private async Task<IMessageActivity> GetChatGPTResponseAsync(string inputMessage, string openAIKey)
+        private async Task<IMessageActivity> GetChatGPTResponseAsync(string inputMessage)
         {
             IMessageActivity responseMessage = null;
             var apiModel = ApiModelFactory.CreateApiModel(inputMessage);
-            string url = $"https://api.openai.com/v1/{apiModel.url}";
 
-            using (var client = new HttpClient())
+            if (apiModel.Type == ApiModelType.Image)
             {
-                client.DefaultRequestHeaders.Add("Authorization", $"Bearer {openAIKey}");
-                string body = apiModel.GetBody(inputMessage);
-                var content = new StringContent(body, Encoding.UTF8, "application/json");
-                var result = await client.PostAsync(url, content);
-                Console.WriteLine(result.StatusCode);
-                if (result.IsSuccessStatusCode)
-                {
-                    var responseContent = await result.Content.ReadAsStringAsync();
-                    dynamic data = JsonConvert.DeserializeObject(responseContent);
-
-                    if (apiModel is ImageApiModel)
-                    {
-                        var imageUrl = data.data[0].url;
-                        var attachment = new Attachment
-                        {
-                            Name = "image.png",
-                            ContentType = "image/png",
-                            ContentUrl = imageUrl
-                        };
-
-                        responseMessage = MessageFactory.Attachment(attachment);
-                    }
-                    else
-                    {
-                        string textResponse = data.choices[0].text;
-                        responseMessage = MessageFactory.Text(textResponse);
-                    }
-                }
+                responseMessage = await imageClient.CallOpenAIApi(apiModel as ImageApiModel, inputMessage);
             }
+            else
+            {
+                responseMessage = await textClient.CallOpenAIApi(apiModel as TextApiModel, chatContext, inputMessage);
+            }
+
             return responseMessage;
         }
 

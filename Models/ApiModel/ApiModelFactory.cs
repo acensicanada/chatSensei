@@ -1,4 +1,4 @@
-﻿namespace ChatSensei.Models
+﻿namespace ChatSensei.Models.ApiModel
 {
     public static class ApiModelFactory
     {
