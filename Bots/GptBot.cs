@@ -21,7 +21,7 @@ namespace chatSensei.Bots
     {
         private readonly IImageAIClient imageClient;
         private readonly ITextAIClient textClient;
-        private readonly static Dictionary<string, ChatContext> conversationContext = new Dictionary<string, ChatContext>();
+        private readonly static Dictionary<string, ChatContext> conversationContext = new();
 
         public GptBot(IImageAIClient imageClient, ITextAIClient textClient)
         {
@@ -35,7 +35,7 @@ namespace chatSensei.Bots
 
             if (!conversationContext.ContainsKey(conversationId))
             {
-                // Create a new ConversationState for this conversation if one does not already exist
+                // Create a new ConversationContext for this conversation if one does not already exist
                 conversationContext[conversationId] = new ChatContext();
             }
 

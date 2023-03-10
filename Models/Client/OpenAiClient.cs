@@ -1,7 +1,5 @@
-﻿using ChatSensei.Models.ApiModel;
-using Microsoft.Bot.Schema;
+﻿using System;
 using System.Net.Http;
-using System.Threading.Tasks;
 
 namespace ChatSensei.Models.Client
 {
@@ -9,12 +7,11 @@ namespace ChatSensei.Models.Client
     {
         protected HttpClient HttpClient { get; }
 
-        // TODO: Manage token properly
-
         public OpenAiClient()
         {
             HttpClient = new HttpClient();
-            HttpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer ");
+            string openaiToken = Environment.GetEnvironmentVariable("OPENAI_TOKEN");
+            HttpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {openaiToken}");
         }
     }
 }

@@ -13,6 +13,7 @@ using Microsoft.Bot.Connector.Authentication;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using System;
 using System.Collections.Generic;
 
 namespace chatSensei
@@ -39,9 +40,6 @@ namespace chatSensei
 
             // Create the Bot Adapter with error handling enabled.
             services.AddSingleton<IBotFrameworkHttpAdapter, AdapterWithErrorHandler>();
-
-            //var config = new ConfigurationBuilder().AddUserSecrets<Program>().Build();
-            //string openAIKey = config["openAIKey"];
 
             services.AddSingleton<IImageAIClient, ImageAIClient>();
             services.AddSingleton<ITextAIClient, TextAIClient>();
